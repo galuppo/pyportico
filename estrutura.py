@@ -107,6 +107,12 @@ class ModeloPortico:
     secao_link: SecaoTransversal | None = None
     material_link: Material | None = None
 
+    # Origem usada para travar o grid de TODAS as Lajes na montagem (ver
+    # Grelha.gerar_grelha): False (padrão) alinha o grid na origem global
+    # (0, 0, 0), deixando as linhas de lajes vizinhas coincidentes; True
+    # alinha no primeiro vértice do polígono de cada Laje.
+    origem_grelha_no_primeiro_vertice: bool = False
+
     _montado: bool = False
 
     # Dicionários de acesso rápido por nome. Pilar: nome é global, então
@@ -511,7 +517,11 @@ class ModeloPortico:
             # a Grelha trabalha com tuplas (x, y, z) -- converte os Pontos do polígono
             poligono = [(p.x, p.y, p.z) for p in laje.poligono]
             grelha = Grelha(poligono, laje.direcao_e1)
-            grelha.gerar_grelha(laje.espacamento_x, laje.espacamento_y)
+            grelha.gerar_grelha(
+                laje.espacamento_x,
+                laje.espacamento_y,
+                origem_no_primeiro_vertice=self.origem_grelha_no_primeiro_vertice,
+            )
             laje.grelha = grelha
 
             if not isinstance(laje.secao, SecaoRetangular):

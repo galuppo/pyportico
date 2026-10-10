@@ -67,6 +67,7 @@ class Grelha:
 		espacamento_x: float,
 		espacamento_y: float,
 		origem: Optional[Ponto3D] = None,
+		origem_no_primeiro_vertice: bool = False,
 	) -> None:
 		"""
 		Gera os pontos e as barras da grelha com o espaçamento informado.
@@ -78,16 +79,17 @@ class Grelha:
 		espacamento_y : espaçamento das linhas na direção do eixo local e2.
 		origem : ponto de referência (coordenadas globais) para travar a malha.
 				 Não precisa estar sobre o plano: apenas sua projeção no plano
-				 local é usada. Se None, usa o primeiro vértice da poligonal.
+				 local é usada. Se None, depende de `origem_no_primeiro_vertice`.
+		origem_no_primeiro_vertice : usado apenas quando `origem` é None. Se True,
+				 trava a malha no primeiro vértice da poligonal; se False (padrão),
+				 na origem global (0, 0, 0).
 		"""
 		if espacamento_x <= 0 or espacamento_y <= 0:
 			raise ValueError("Os espaçamentos devem ser positivos.")
 
-		origem_local = (
-			tuple(self._para_local(np.array(origem, dtype=float)))
-			if origem is not None
-			else (0.0, 0.0)
-		)
+		if origem is None:
+			origem = self.poligono[0] if origem_no_primeiro_vertice else (0.0, 0.0, 0.0)
+		origem_local = tuple(self._para_local(np.array(origem, dtype=float)))
 
 		linhas_u, linhas_v = self._linhas_da_malha(espacamento_x, espacamento_y, origem_local)
 
@@ -295,20 +297,26 @@ class Grelha:
 		v_min, v_max = float(vs.min()), float(vs.max())
 		u0, v0 = origem_local
 
-		u_ini = u0 + espacamento_x * ((u_min - u0) // espacamento_x + 1)
-		v_ini = v0 + espacamento_y * ((v_min - v0) // espacamento_y + 1)
+		return (
+			self._linhas_eixo(u_min, u_max, u0, espacamento_x),
+			self._linhas_eixo(v_min, v_max, v0, espacamento_y),
+		)
 
-		linhas_u, u = [], u_ini
-		while u <= u_max:
-			linhas_u.append(u)
-			u += espacamento_x
-
-		linhas_v, v = [], v_ini
-		while v <= v_max:
-			linhas_v.append(v)
-			v += espacamento_y
-
-		return linhas_u, linhas_v
+	def _linhas_eixo(
+		self, minimo: float, maximo: float, origem: float, espacamento: float
+	) -> List[float]:
+		"""
+		Posições das linhas (origem + k * espacamento) estritamente após `minimo`
+		e até `maximo`. Calcula cada linha pelo índice k (sem acumular somas) e
+		usa _TOL nas comparações, evitando erro de ponto flutuante quando a
+		origem está longe da poligonal.
+		"""
+		k_ini = int(np.floor((minimo - origem) / espacamento + self._TOL)) + 1
+		k_fim = int(np.floor((maximo - origem) / espacamento + self._TOL))
+		return [
+			round(origem + k * espacamento, self._CASAS_DECIMAIS)
+			for k in range(k_ini, k_fim + 1)
+		]
 
 	def _intersecoes_verticais(self, u: float) -> List[float]:
 		vs = []

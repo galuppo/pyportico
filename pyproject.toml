@@ -3,7 +3,7 @@ requires = ["hatchling>=1.24"]
 build-backend = "hatchling.build"
 
 [project]
-name = "portico-espacial"
+name = "pyportico"
 version = "0.1.0"
 description = "Modelo de dados para pórticos espaciais de concreto armado, independente de software de análise, com exportação DXF e IFC4."
 readme = "README.md"
@@ -39,12 +39,11 @@ dev = [
 ]
 
 [project.urls]
-# CONFIRMAR: substituir pelo endereço real do repositório
-Homepage = "https://github.com/<usuario>/<repositorio>"
-Issues = "https://github.com/<usuario>/<repositorio>/issues"
+Homepage = "https://github.com/galuppo/pyportico"
+Issues = "https://github.com/galuppo/pyportico/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/portico_espacial"]
+packages = ["src/pyportico"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

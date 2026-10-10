@@ -15,14 +15,14 @@ Execução (com o pacote instalado: pip install -e ".[dxf]"):
 
 from pathlib import Path
 
-from portico_espacial.concreto import Concreto, TipoAgregado
-from portico_espacial.elementos import ApoioRestricao
-from portico_espacial.estrutura import ModeloPortico
-from portico_espacial.exportadores.dxf import ExportadorDxf
-from portico_espacial.exportadores.ifc import EscritorIfcManual, ExportadorIfc
-from portico_espacial.geometria import Ponto
-from portico_espacial.secoes import SecaoRetangular
-from portico_espacial.vinculos import Restricao
+from pyportico.concreto import Concreto, TipoAgregado
+from pyportico.elementos import ApoioRestricao
+from pyportico.estrutura import ModeloPortico
+from pyportico.exportadores.dxf import ExportadorDxf
+from pyportico.exportadores.ifc import EscritorIfcManual, ExportadorIfc
+from pyportico.geometria import Ponto
+from pyportico.secoes import SecaoRetangular
+from pyportico.vinculos import Restricao
 
 
 def exemplo_portico_simples() -> ModeloPortico:

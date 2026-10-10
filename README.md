@@ -1,4 +1,4 @@
-# Pórtico Espacial
+# pyportico
 
 Modelo de dados em Python para descrever **pórticos espaciais de concreto armado** (pilares, vigas e lajes), **independente de qualquer software de análise**.
 
@@ -64,21 +64,20 @@ O modelo de domínio não conhece o SAP2000, o DXF ou o IFC. Cada formato de sa�
 
 Instalação direta do GitHub:
 
-<!-- CONFIRMAR: substituir <usuario>/<repositorio> pelo endereço real -->
 
 ```bash
-pip install "portico-espacial[dxf] @ git+https://github.com/<usuario>/<repositorio>.git"
+pip install "pyportico[dxf] @ git+https://github.com/galuppo/pyportico.git"
 ```
 
 Ou a partir de um clone local:
 
 ```bash
-git clone https://github.com/<usuario>/<repositorio>.git
-cd <repositorio>
+git clone https://github.com/galuppo/pyportico.git
+cd pyportico
 pip install ".[dxf]"
 ```
 
-Sem o extra `[dxf]`, todo o modelo e o exportador IFC funcionam; apenas `portico_espacial.exportadores.dxf` exige o `ezdxf`.
+Sem o extra `[dxf]`, todo o modelo e o exportador IFC funcionam; apenas `pyportico.exportadores.dxf` exige o `ezdxf`.
 
 O `ifcopenshell` **não** é necessário para exportar IFC (a escrita STEP é feita manualmente). Ele é útil apenas para validar/visualizar os arquivos gerados.
 
@@ -89,7 +88,7 @@ O `ifcopenshell` **não** é necessário para exportar IFC (a escrita STEP é fe
 Pórtico simples: dois pilares engastados na base e uma viga entre eles.
 
 ```python
-from portico_espacial import (
+from pyportico import (
 	ApoioRestricao,
 	Concreto,
 	ModeloPortico,
@@ -136,8 +135,8 @@ modelo.criar_viga(
 modelo.montar()
 
 # 6) Exportação
-from portico_espacial.exportadores.dxf import ExportadorDxf
-from portico_espacial.exportadores.ifc import EscritorIfcManual, ExportadorIfc
+from pyportico.exportadores.dxf import ExportadorDxf
+from pyportico.exportadores.ifc import EscritorIfcManual, ExportadorIfc
 
 ExportadorDxf().exportar_solido(modelo, "portico.dxf")
 ExportadorIfc(modelo, EscritorIfcManual()).exportar("portico.ifc")
@@ -239,7 +238,7 @@ Apenas o esqueleto da classe (`NotImplementedError`). Está prevista a exportaç
 .
 ├── pyproject.toml              # metadados, dependências e configuração (pytest, ruff)
 ├── src/
-│   └── portico_espacial/
+│   └── pyportico/
 │       ├── __init__.py         # API pública e __version__
 │       ├── geometria.py        # Ponto e tolerância geométrica
 │       ├── materiais.py        # Material
@@ -270,8 +269,8 @@ Apenas o esqueleto da classe (`NotImplementedError`). Está prevista a exportaç
 ## Desenvolvimento
 
 ```bash
-git clone https://github.com/<usuario>/<repositorio>.git
-cd <repositorio>
+git clone https://github.com/galuppo/pyportico.git
+cd pyportico
 python -m venv .venv
 .venv\Scripts\activate          # Windows  (Linux/macOS: source .venv/bin/activate)
 pip install -e ".[dev]"

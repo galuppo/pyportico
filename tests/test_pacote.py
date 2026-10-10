@@ -1,12 +1,12 @@
 from importlib.metadata import version
 
-import portico_espacial
+import pyportico
 
 
 def test_versao_coincide_com_metadados():
-	assert portico_espacial.__version__ == version("portico-espacial")
+	assert pyportico.__version__ == version("pyportico")
 
 
 def test_all_exporta_nomes_existentes():
-	for nome in portico_espacial.__all__:
-		assert hasattr(portico_espacial, nome), nome
+	for nome in pyportico.__all__:
+		assert hasattr(pyportico, nome), nome

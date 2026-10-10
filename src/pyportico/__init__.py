@@ -1,8 +1,8 @@
 """
-Pórtico Espacial: modelo de dados para pórticos espaciais de concreto armado.
+pyportico: modelo de dados para pórticos espaciais de concreto armado.
 
 A API de modelagem é reexportada aqui. Os exportadores ficam em
-`portico_espacial.exportadores` e são importados explicitamente, pois o
+`pyportico.exportadores` e são importados explicitamente, pois o
 exportador DXF depende do extra opcional `ezdxf`.
 """
 

@@ -1,9 +1,9 @@
 import pytest
 
-from portico_espacial.exportadores.ifc import EscritorIfcManual, ExportadorIfc
+from pyportico.exportadores.ifc import EscritorIfcManual, ExportadorIfc
 
 ezdxf = pytest.importorskip("ezdxf")
-from portico_espacial.exportadores.dxf import ExportadorDxf  # noqa: E402
+from pyportico.exportadores.dxf import ExportadorDxf  # noqa: E402
 
 
 @pytest.mark.parametrize("metodo", ["exportar", "exportar_solido"])

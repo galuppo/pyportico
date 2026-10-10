@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from portico_espacial import (
+from pyportico import (
 	ApoioRestricao,
 	Concreto,
 	ModeloPortico,

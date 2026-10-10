@@ -35,7 +35,7 @@ dxf = ["ezdxf>=1.1"]
 dev = [
 	"ezdxf>=1.1",
 	"pytest>=8",
-	"ruff>=0.6",
+	"ruff==0.17.*",
 ]
 
 [project.urls]

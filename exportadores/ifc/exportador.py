@@ -9,22 +9,22 @@ diretamente, só chama writer.criar_entidade(tipo, **atributos).
 ESCOPO DESTA VERSÃO:
   - estrutura espacial (Pavimento -> IfcBuildingStorey) e unidades
   - camada analítica completa (IfcStructuralCurveMember + IfcStructuralPointConnection,
-    condição de contorno a partir de Restricao) pra Pilar, Viga, Link e Laje (grelha)
+	condição de contorno a partir de Restricao) pra Pilar, Viga, Link e Laje (grelha)
   - camada física completa, COM geometria de sólido (IfcExtrudedAreaSolid), pra
-    Pilar/Viga/Laje -- ligada à camada analítica (IfcRelAssignsToProduct), ao
-    Pavimento (IfcRelContainedInSpatialStructure) e ao IfcMaterial
+	Pilar/Viga/Laje -- ligada à camada analítica (IfcRelAssignsToProduct), ao
+	Pavimento (IfcRelContainedInSpatialStructure) e ao IfcMaterial
   - material (IfcMaterial), deduplicado por Material.nome
 
 CONVENÇÃO DE ORIENTAÇÃO 3D (Pilar/Viga), confirmada com o usuário -- mesma
 convenção já usada em ExportadorDxf.exportar_solido() (padrão SAP2000):
   eixo1 = ao longo da barra (do primeiro no_inicial do grupo ao último no_final)
   eixo2 = "pra cima" -- projeção de Z global no plano perpendicular a eixo1
-          (ou de X global, se a barra for quase vertical) + rotação da Barra
+		  (ou de X global, se a barra for quase vertical) + rotação da Barra
   eixo3 = eixo1 × eixo2
   altura da seção (eixo forte) alinhada a eixo2; largura a eixo3
   Pilar: seção centrada no eixo (eixo2 ∈ [-altura/2, +altura/2])
   Viga: referência é o TOPO da seção (ver docstring de interseccao.py) --
-        seção desce a partir da referência (eixo2 ∈ [-altura, 0])
+		seção desce a partir da referência (eixo2 ∈ [-altura, 0])
 
 CONVENÇÃO DA LAJE, confirmada com o usuário: o contorno (laje.grelha.poligono)
 representa o TOPO da laje; o sólido extrude PRA BAIXO por laje.secao.altura
@@ -331,9 +331,9 @@ class ExportadorIfc:
 		CONVENÇÃO PRÓPRIA DO PROJETO (mesma em ExportadorDxf._eixos_locais):
 		  eixo1 = ao longo da barra (p_ini -> p_fim)
 		  eixo2 = "pra cima" -- Z global projetado no plano perpendicular a
-		          eixo1; se a barra é vertical (Z não tem projeção, caso
-		          degenerado), usa Y global no lugar (o SAP2000 usa X aqui --
-		          ajuste deliberado, ver abaixo)
+				  eixo1; se a barra é vertical (Z não tem projeção, caso
+				  degenerado), usa Y global no lugar (o SAP2000 usa X aqui --
+				  ajuste deliberado, ver abaixo)
 		  eixo3 = eixo1 x eixo2
 		  `rotacao_graus` gira eixo2/eixo3 em torno de eixo1.
 		Regra ÚNICA pra qualquer orientação: altura da seção -> eixo2,

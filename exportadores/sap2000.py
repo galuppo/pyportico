@@ -15,12 +15,12 @@ from ..estrutura import ModeloPortico
 
 
 class ExportadorSap2000:
-    """Exporta um ModeloPortico montado para uma instância do SAP2000 aberta via OAPI."""
+	"""Exporta um ModeloPortico montado para uma instância do SAP2000 aberta via OAPI."""
 
-    def exportar(self, modelo: ModeloPortico) -> None:
-        """
-        Para cada Barra do modelo (Lances, Vãos, Links, barras de grid),
-        cria o frame correspondente no SAP2000, usando o id da Barra
-        como label.
-        """
-        raise NotImplementedError
+	def exportar(self, modelo: ModeloPortico) -> None:
+		"""
+		Para cada Barra do modelo (Lances, Vãos, Links, barras de grid),
+		cria o frame correspondente no SAP2000, usando o id da Barra
+		como label.
+		"""
+		raise NotImplementedError

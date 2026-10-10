@@ -20,27 +20,27 @@ from .estrutura import DimensionamentoPortico, ModeloPortico
 
 
 class ApoioNaoDefinidoError(Exception):
-    """Levantado quando um cruzamento Viga x Viga não tem Apoio declarado na modelagem."""
+	"""Levantado quando um cruzamento Viga x Viga não tem Apoio declarado na modelagem."""
 
 
 class DetalhamentoPortico:
-    """
-    Fase de detalhamento: organização da documentação por Pavimento e
-    listas de ferro, a partir dos Apoios já identificados na modelagem.
-    """
+	"""
+	Fase de detalhamento: organização da documentação por Pavimento e
+	listas de ferro, a partir dos Apoios já identificados na modelagem.
+	"""
 
-    def __init__(self, dimensionamento: DimensionamentoPortico) -> None:
-        self.dimensionamento = dimensionamento
+	def __init__(self, dimensionamento: DimensionamentoPortico) -> None:
+		self.dimensionamento = dimensionamento
 
-    def validar_apoios_viga_em_viga(self, modelo: ModeloPortico) -> None:
-        """
-        Percorre os Vãos do modelo já montado em busca de cruzamentos
-        Viga x Viga sem Apoio declarado, e levanta ApoioNaoDefinidoError
-        caso encontre algum.
+	def validar_apoios_viga_em_viga(self, modelo: ModeloPortico) -> None:
+		"""
+		Percorre os Vãos do modelo já montado em busca de cruzamentos
+		Viga x Viga sem Apoio declarado, e levanta ApoioNaoDefinidoError
+		caso encontre algum.
 
-        PENDÊNCIA: a forma exata de identificar "isto é um cruzamento
-        Viga x Viga sem Apoio" depende de como ModeloPortico.montar()
-        vier a marcar nós compartilhados entre duas Vigas -- a definir
-        junto com o algoritmo de interseção.
-        """
-        raise NotImplementedError
+		PENDÊNCIA: a forma exata de identificar "isto é um cruzamento
+		Viga x Viga sem Apoio" depende de como ModeloPortico.montar()
+		vier a marcar nós compartilhados entre duas Vigas -- a definir
+		junto com o algoritmo de interseção.
+		"""
+		raise NotImplementedError

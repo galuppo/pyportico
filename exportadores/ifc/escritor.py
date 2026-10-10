@@ -49,7 +49,7 @@ def comprimir_guid(uuid_hex: str) -> str:
 	  2. prefixa com "0000" (2 bytes zerados) -> 18 bytes ao todo
 	  3. base64 padrão desses 18 bytes -> 24 caracteres, sem padding "="
 	  4. descarta os 2 primeiros caracteres (originados do prefixo do
-	     passo 2) -> 22 caracteres
+		 passo 2) -> 22 caracteres
 	  5. traduz do alfabeto base64 padrão pro alfabeto do IFC
 	"""
 	hex_limpo = re.sub(r"\W", "", uuid_hex.lower())

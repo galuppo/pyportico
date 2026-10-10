@@ -279,7 +279,7 @@ class Grelha:
 		ponto_global = self._origem_plano + u * self._e1 + v * self._e2
 		return (float(ponto_global[0]),
 				float(ponto_global[1]),
-		  		float(ponto_global[2]))
+				float(ponto_global[2]))
 
 	# ------------------------------------------------------------------
 	# Métodos internos (geometria 2D no plano local)

@@ -319,8 +319,7 @@ class ExportadorDxf:
 			# asterisco 3D: uma haste em cada sentido dos 3 eixos locais globais
 			eixos = [(tamanho, 0, 0), (0, tamanho, 0), (0, 0, tamanho)]
 			return [
-				(Ponto(no.x - dx, no.y - dy, no.z - dz), Ponto(no.x + dx, no.y + dy, no.z + dz))
-				for dx, dy, dz in eixos
+				(Ponto(no.x - dx, no.y - dy, no.z - dz), Ponto(no.x + dx, no.y + dy, no.z + dz)) for dx, dy, dz in eixos
 			]
 
 		if tipo == "SIMPLES":

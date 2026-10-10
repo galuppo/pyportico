@@ -3,9 +3,9 @@ Módulo de estrutura do Pórtico Espacial: a montagem do modelo geométrico
 e a orquestração das 4 fases do fluxo de trabalho (modelagem, análise,
 dimensionamento, detalhamento).
 
-DetalhamentoPortico mora em detalhamento.py (não aqui) -- import feito
-dentro do método detalhar() do Portico para evitar import circular
-(detalhamento.py importa DimensionamentoPortico daqui).
+DetalhamentoPortico mora em detalhamento.py (não aqui) -- importado só
+sob TYPE_CHECKING para evitar import circular (detalhamento.py importa
+DimensionamentoPortico daqui).
 
 Nenhuma classe deste módulo conhece o SAP2000 -- a exportação fica
 isolada em exportadores/sap2000.py.
@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from itertools import pairwise
+from typing import TYPE_CHECKING
 
 from .elementos import (
 	Apoio,
@@ -43,6 +45,9 @@ from .interseccao import (
 from .materiais import Material
 from .secoes import SecaoRetangular, SecaoTransversal
 from .vinculos import Restricao
+
+if TYPE_CHECKING:
+	from .detalhamento import DetalhamentoPortico
 
 
 def _distancia_no_eixo(viga: Viga, ponto: Ponto) -> float:
@@ -259,9 +264,11 @@ class ModeloPortico:
 
 		pontos = list(poligono)
 		# descarta o vértice de fechamento, se o polígono veio explicitamente fechado
-		if len(pontos) > 1 and math.dist(
-			(pontos[0].x, pontos[0].y, pontos[0].z), (pontos[-1].x, pontos[-1].y, pontos[-1].z)
-		) <= TOLERANCIA_GEOMETRICA:
+		if (
+			len(pontos) > 1
+			and math.dist((pontos[0].x, pontos[0].y, pontos[0].z), (pontos[-1].x, pontos[-1].y, pontos[-1].z))
+			<= TOLERANCIA_GEOMETRICA
+		):
 			pontos.pop()
 		if len(pontos) < 3:
 			raise ValueError("O polígono da Laje precisa ter ao menos 3 vértices distintos.")
@@ -374,7 +381,7 @@ class ModeloPortico:
 			cotas_ordenadas = sorted(cotas)
 
 			pilar.lances = []
-			for indice, (base, topo) in enumerate(zip(cotas_ordenadas, cotas_ordenadas[1:]), start=1):
+			for indice, (base, topo) in enumerate(pairwise(cotas_ordenadas), start=1):
 				pavimento_lance = pavimento_por_cota.get(topo)
 				if pavimento_lance is None:
 					# quebra sem pavimento próprio (ex.: viga de travamento) -- sobe até achar um real
@@ -437,7 +444,7 @@ class ModeloPortico:
 			distancias_ordenadas = sorted(quebras)
 
 			viga.vaos = []
-			for indice, (d_ini, d_fim) in enumerate(zip(distancias_ordenadas, distancias_ordenadas[1:]), start=1):
+			for indice, (d_ini, d_fim) in enumerate(pairwise(distancias_ordenadas), start=1):
 				viga.vaos.append(
 					Vao(
 						id=self.gerador_id.proximo_id(),
@@ -466,9 +473,7 @@ class ModeloPortico:
 		`pavimentos` é ignorada (decisão de projeto).
 		"""
 		n = len(laje.poligono)
-		vaos_candidatos = [
-			vao for viga in self.vigas_do_pavimento(laje.pavimento) for vao in viga.vaos
-		]
+		vaos_candidatos = [vao for viga in self.vigas_do_pavimento(laje.pavimento) for vao in viga.vaos]
 
 		apoios: list[ApoioLaje] = []
 		for aresta in range(n):
@@ -644,9 +649,8 @@ class Portico:
 			raise RuntimeError("Chame analisar() antes de dimensionar().")
 		raise NotImplementedError
 
-	def detalhar(self) -> "DetalhamentoPortico":
+	def detalhar(self) -> DetalhamentoPortico:
 		"""A partir do dimensionamento já feito, organiza a documentação por Pavimento e resolve os Apoios."""
-		from .detalhamento import DetalhamentoPortico  # import local: evita ciclo com detalhamento.py
 
 		if self.dimensionamento is None:
 			raise RuntimeError("Chame dimensionar() antes de detalhar().")

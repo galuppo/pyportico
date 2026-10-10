@@ -18,10 +18,9 @@ import uuid
 from abc import ABC, abstractmethod
 from base64 import b64encode
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
-from .ordem_atributos import ORDEM_ATRIBUTOS, ENTIDADES_COM_ATRIBUTO_DERIVADO_INICIAL
-
+from .ordem_atributos import ENTIDADES_COM_ATRIBUTO_DERIVADO_INICIAL, ORDEM_ATRIBUTOS
 
 # ======================================================================
 # GUID -- algoritmo confirmado contra o código-fonte oficial do
@@ -30,12 +29,8 @@ from .ordem_atributos import ORDEM_ATRIBUTOS, ENTIDADES_COM_ATRIBUTO_DERIVADO_IN
 # da biblioteca padrão -- não depende do ifcopenshell de fato.
 # ======================================================================
 
-_ALFABETO_BASE64_PADRAO = (
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-)
-_ALFABETO_BASE64_IFC = (
-	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$"
-)
+_ALFABETO_BASE64_PADRAO = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+_ALFABETO_BASE64_IFC = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$"
 _TRADUCAO_PADRAO_PARA_IFC = str.maketrans(_ALFABETO_BASE64_PADRAO, _ALFABETO_BASE64_IFC)
 
 
@@ -89,6 +84,7 @@ class RefEntidadeIfc:
 @dataclass(frozen=True)
 class _RefEntidadeIfcManual(RefEntidadeIfc):
 	"""Pro EscritorIfcManual, a referência é só o número #id do STEP."""
+
 	id_step: int
 
 
@@ -96,7 +92,6 @@ class _RefEntidadeIfcManual(RefEntidadeIfc):
 # Interface do Writer
 # ======================================================================
 class IfcWriter(ABC):
-
 	@abstractmethod
 	def criar_entidade(self, tipo: str, **atributos: Any) -> RefEntidadeIfc:
 		"""
@@ -119,28 +114,22 @@ class IfcWriter(ABC):
 # Implementação: escreve STEP (.ifc) manualmente, sem ifcopenshell.
 # ======================================================================
 class EscritorIfcManual(IfcWriter):
-
 	def __init__(self, schema: str = "IFC4"):
 		self._schema = schema
 		self._proximo_id = 1
-		self._linhas: List[str] = []  # linhas já serializadas da seção DATA
+		self._linhas: list[str] = []  # linhas já serializadas da seção DATA
 
 	def criar_entidade(self, tipo: str, **atributos: Any) -> RefEntidadeIfc:
 		ordem = ORDEM_ATRIBUTOS.get(tipo)
 		if ordem is None:
-			raise ValueError(
-				f"Ordem de atributos não definida pra '{tipo}' em ORDEM_ATRIBUTOS."
-			)
+			raise ValueError(f"Ordem de atributos não definida pra '{tipo}' em ORDEM_ATRIBUTOS.")
 
 		# atributos passados que não existem na ordem esperada indicam
 		# erro de quem chamou (nome errado, typo) -- falha cedo em vez de
 		# ignorar silenciosamente
 		desconhecidos = set(atributos) - set(ordem)
 		if desconhecidos:
-			raise ValueError(
-				f"Atributo(s) desconhecido(s) pra '{tipo}': {sorted(desconhecidos)}. "
-				f"Esperado(s): {ordem}"
-			)
+			raise ValueError(f"Atributo(s) desconhecido(s) pra '{tipo}': {sorted(desconhecidos)}. Esperado(s): {ordem}")
 
 		partes = [self._serializar_valor(atributos.get(nome)) for nome in ordem]
 

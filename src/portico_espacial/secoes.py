@@ -4,7 +4,6 @@ Módulo de seções transversais do Pórtico Espacial.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Tuple
 
 
 class SecaoTransversal(ABC):
@@ -34,7 +33,7 @@ class SecaoTransversal(ABC):
 
 	@property
 	@abstractmethod
-	def vertices(self) -> List[Tuple[float, float]]:
+	def vertices(self) -> list[tuple[float, float]]:
 		"""
 		Contorno poligonal da seção, no sistema de coordenadas LOCAL da
 		própria seção -- x = direção "largura" (associada a inercia_y,
@@ -66,7 +65,7 @@ class SecaoRetangular(SecaoTransversal):
 		return (self.altura * self.largura**3) / 12
 
 	@property
-	def vertices(self) -> List[Tuple[float, float]]:
+	def vertices(self) -> list[tuple[float, float]]:
 		# retângulo centrado na origem, sentido anti-horário
 		meia_largura, meia_altura = self.largura / 2, self.altura / 2
 		return [
@@ -93,15 +92,15 @@ class SecaoPoligonal(SecaoTransversal):
 	vertices: pelo menos 3 pontos (x, y), sem repetir o primeiro no fim.
 	"""
 
-	vertices_informados: Tuple[Tuple[float, float], ...]
+	vertices_informados: tuple[tuple[float, float], ...]
 
-	def __init__(self, vertices: List[Tuple[float, float]]):
+	def __init__(self, vertices: list[tuple[float, float]]):
 		if len(vertices) < 3:
 			raise ValueError("Uma seção poligonal precisa de ao menos 3 vértices.")
 		object.__setattr__(self, "vertices_informados", tuple(vertices))
 
 	@property
-	def vertices(self) -> List[Tuple[float, float]]:
+	def vertices(self) -> list[tuple[float, float]]:
 		return list(self.vertices_informados)
 
 	def _area_com_sinal(self) -> float:
@@ -114,7 +113,7 @@ class SecaoPoligonal(SecaoTransversal):
 			soma += x_i * y_j - x_j * y_i
 		return soma / 2
 
-	def _centroide(self) -> Tuple[float, float]:
+	def _centroide(self) -> tuple[float, float]:
 		pontos = self.vertices_informados
 		area_sinal = self._area_com_sinal()
 		cx = cy = 0.0
@@ -127,7 +126,7 @@ class SecaoPoligonal(SecaoTransversal):
 		fator = 1 / (6 * area_sinal)
 		return cx * fator, cy * fator
 
-	def _inercias_na_origem_com_sinal(self) -> Tuple[float, float]:
+	def _inercias_na_origem_com_sinal(self) -> tuple[float, float]:
 		"""Ix, Iy em torno da ORIGEM local (não do centroide) -- com o mesmo sinal de _area_com_sinal()."""
 		pontos = self.vertices_informados
 		ix = iy = 0.0

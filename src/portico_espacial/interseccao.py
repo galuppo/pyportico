@@ -81,10 +81,7 @@ def eh_vertical(pilar: Pilar) -> bool:
 	Comparação exata (sem tolerância) -- assume que as coordenadas do
 	modelo já vêm exatas o suficiente (decisão de projeto).
 	"""
-	return (
-		pilar.ponto_base.x == pilar.ponto_topo.x
-		and pilar.ponto_base.y == pilar.ponto_topo.y
-	)
+	return pilar.ponto_base.x == pilar.ponto_topo.x and pilar.ponto_base.y == pilar.ponto_topo.y
 
 
 def _ponto_mais_proximo_em_planta(viga: Viga, x0: float, y0: float) -> Ponto:
@@ -188,9 +185,7 @@ def _intersecao_pilar_generico(viga: Viga, pilar: Pilar) -> ResultadoIntersecao 
 	AINDA NÃO IMPLEMENTADO -- decisão de projeto: validar o caminho
 	simplificado (Pilar vertical) antes de generalizar.
 	"""
-	raise NotImplementedError(
-		"Interseção com Pilar inclinado ainda não implementada."
-	)
+	raise NotImplementedError("Interseção com Pilar inclinado ainda não implementada.")
 
 
 def detectar_intersecao_viga_pilar(viga: Viga, pilar: Pilar) -> ResultadoIntersecao | None:
@@ -399,9 +394,7 @@ def detectar_intersecoes_viga_viga_por_pavimento(
 _EPS_DECLIVIDADE = 1e-12
 
 
-def detectar_apoio_laje_em_vao(
-	aresta_inicial: Ponto, aresta_final: Ponto, vao: Vao
-) -> tuple[float, float] | None:
+def detectar_apoio_laje_em_vao(aresta_inicial: Ponto, aresta_final: Ponto, vao: Vao) -> tuple[float, float] | None:
 	"""
 	Detecta se uma aresta do polígono de uma Laje se apoia (total ou
 	parcialmente) num Vão de Viga.

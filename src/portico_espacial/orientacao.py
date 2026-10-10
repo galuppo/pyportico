@@ -39,13 +39,12 @@ planta vista de cima. Seções simétricas não são afetadas.
 from __future__ import annotations
 
 import math
-from typing import List, Tuple
 
 from .geometria import Ponto
 from .secoes import SecaoTransversal
 
-Vetor2D = Tuple[float, float]
-Vetor3D = Tuple[float, float, float]
+Vetor2D = tuple[float, float]
+Vetor3D = tuple[float, float, float]
 
 # Barra "vertical" = eixo1 praticamente paralelo a Z (produto escalar com Z
 # quase 1). Tolerância propositalmente apertada: só o caso degenerado de
@@ -53,9 +52,7 @@ Vetor3D = Tuple[float, float, float]
 _TOLERANCIA_VERTICAL = 1e-9
 
 
-def eixos_locais(
-	p_ini: Ponto, p_fim: Ponto, rotacao_graus: float = 0.0
-) -> Tuple[Vetor3D, Vetor3D, Vetor3D, float]:
+def eixos_locais(p_ini: Ponto, p_fim: Ponto, rotacao_graus: float = 0.0) -> tuple[Vetor3D, Vetor3D, Vetor3D, float]:
 	"""
 	Base ortonormal local da barra de p_ini a p_fim, com a rotação própria
 	aplicada. Retorna (eixo1, eixo2, eixo3, comprimento).
@@ -93,7 +90,7 @@ def eixos_locais(
 	return e1, e2, e3, comprimento
 
 
-def vertices_anti_horario(vertices: List[Vetor2D]) -> List[Vetor2D]:
+def vertices_anti_horario(vertices: list[Vetor2D]) -> list[Vetor2D]:
 	"""
 	Garante sentido anti-horário (área com sinal positiva) -- pra que a
 	normal das faces (MESH no DXF, perfil no IFC) saia consistente
@@ -101,13 +98,12 @@ def vertices_anti_horario(vertices: List[Vetor2D]) -> List[Vetor2D]:
 	"""
 	n = len(vertices)
 	area_dupla = sum(
-		vertices[i][0] * vertices[(i + 1) % n][1] - vertices[(i + 1) % n][0] * vertices[i][1]
-		for i in range(n)
+		vertices[i][0] * vertices[(i + 1) % n][1] - vertices[(i + 1) % n][0] * vertices[i][1] for i in range(n)
 	)
 	return vertices if area_dupla > 0 else list(reversed(vertices))
 
 
-def perfil_local(secao: SecaoTransversal, referencia_topo: bool) -> List[Vetor2D]:
+def perfil_local(secao: SecaoTransversal, referencia_topo: bool) -> list[Vetor2D]:
 	"""
 	Contorno da seção como pares (largura, altura) em torno do ponto de
 	referência da barra, em sentido anti-horário, sempre como float.
@@ -132,9 +128,7 @@ def perfil_local(secao: SecaoTransversal, referencia_topo: bool) -> List[Vetor2D
 	return vertices
 
 
-def extensoes_do_perfil(
-	secao: SecaoTransversal, referencia_topo: bool
-) -> Tuple[float, float, float, float]:
+def extensoes_do_perfil(secao: SecaoTransversal, referencia_topo: bool) -> tuple[float, float, float, float]:
 	"""
 	Caixa envolvente do perfil no referencial da barra:
 	(largura_min, largura_max, altura_min, altura_max), relativa ao ponto
@@ -152,7 +146,7 @@ def prisma_global(
 	rotacao_graus: float,
 	secao: SecaoTransversal,
 	referencia_topo: bool,
-) -> Tuple[List[Vetor3D], List[Vetor3D]]:
+) -> tuple[list[Vetor3D], list[Vetor3D]]:
 	"""
 	Vértices, em coordenadas globais, das duas tampas do prisma formado
 	pela seção extrudada de p_ini a p_fim: (tampa_inicial, tampa_final),
@@ -164,7 +158,7 @@ def prisma_global(
 	_, e2, e3, _ = eixos_locais(p_ini, p_fim, rotacao_graus)
 	perfil = perfil_local(secao, referencia_topo)
 
-	def tampa(no: Ponto) -> List[Vetor3D]:
+	def tampa(no: Ponto) -> list[Vetor3D]:
 		return [
 			(
 				no.x + largura * e3[0] + altura * e2[0],

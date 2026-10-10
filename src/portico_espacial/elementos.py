@@ -25,7 +25,6 @@ from __future__ import annotations
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Union
 
 from .geometria import TOLERANCIA_GEOMETRICA, Ponto
 from .grelha import Grelha
@@ -44,7 +43,7 @@ class ElementoEstrutural(ABC):
 	"""
 
 	@abstractmethod
-	def barras(self) -> list["Barra"]:
+	def barras(self) -> list[Barra]:
 		"""Retorna a lista de Barras atômicas que compõem este elemento."""
 
 
@@ -77,7 +76,7 @@ class Barra(ElementoEstrutural):
 	material: Material
 	rotacao: float = 0.0  # ângulo em torno do eixo longitudinal da barra, em graus
 
-	def barras(self) -> list["Barra"]:
+	def barras(self) -> list[Barra]:
 		# Caso trivial do protocolo: uma Barra é composta só por ela mesma.
 		return [self]
 
@@ -134,7 +133,7 @@ class Apoio:
 class ApoioElemento(Apoio):
 	"""Apoio em outro elemento estrutural real do modelo."""
 
-	elemento: Union["Pilar", "Viga"]  # -> Union["Pilar", "Viga", "Fundacao"] quando Fundacao existir
+	elemento: Pilar | Viga  # -> Union["Pilar", "Viga", "Fundacao"] quando Fundacao existir
 
 
 @dataclass
@@ -166,7 +165,7 @@ class Lance(Barra):
 	precisar de nenhuma atualização em cascata.
 	"""
 
-	pilar: "Pilar"
+	pilar: Pilar
 	indice: int  # posição do lance dentro do pilar, da base pro topo (1-based)
 	pavimento: Pavimento
 
@@ -207,7 +206,7 @@ class Vao(Barra):
 	precisar de nenhuma atualização em cascata.
 	"""
 
-	viga: "Viga"
+	viga: Viga
 	indice: int  # posição do vão dentro da viga, do início pro fim (1-based)
 	apoio_inicial: Apoio | None = None
 	apoio_final: Apoio | None = None

@@ -29,16 +29,22 @@ def modelo_simples() -> ModeloPortico:
 
 	for x in (0.0, 5.0):
 		pilar = modelo.criar_pilar(
-			pavimento_base=terreo, x_base=x, y_base=0.0,
-			pavimento_topo=pav1, x_topo=x, y_topo=0.0,
-			secao=secao_pilar, material=c30,
+			pavimento_base=terreo,
+			x_base=x,
+			y_base=0.0,
+			pavimento_topo=pav1,
+			x_topo=x,
+			y_topo=0.0,
+			secao=secao_pilar,
+			material=c30,
 		)
 		pilar.apoio_base = ApoioRestricao(Restricao.engastado(pilar.ponto_base))
 
 	modelo.criar_viga(
 		ponto_inicial=Ponto(0.0, 0.0, 3.0),
 		ponto_final=Ponto(5.0, 0.0, 3.0),
-		secao=secao_viga, material=c30,
+		secao=secao_viga,
+		material=c30,
 		pavimentos=[pav1],
 	)
 	modelo.montar()

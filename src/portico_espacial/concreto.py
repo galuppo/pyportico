@@ -10,8 +10,8 @@ original) -- assim o módulo de elasticidade já fica resolvido
 internamente, sem parâmetro toda vez que for consultado.
 """
 
-from enum import IntEnum
 import math
+from enum import IntEnum
 
 from .materiais import Material
 
@@ -93,12 +93,18 @@ class Concreto(Material):
 	def fcj_MPa(self, j: int, cimento: TipoCimento) -> float:
 		s = 0
 		match cimento:
-			case TipoCimento.CP_I: s = 0.25
-			case TipoCimento.CP_II: s = 0.25
-			case TipoCimento.CP_III: s = 0.38
-			case TipoCimento.CP_IV: s = 0.38
-			case TipoCimento.CP_V_ARI: s = 0.2
-			case _: raise ValueError("Tipo de cimento não reconhecido.")
+			case TipoCimento.CP_I:
+				s = 0.25
+			case TipoCimento.CP_II:
+				s = 0.25
+			case TipoCimento.CP_III:
+				s = 0.38
+			case TipoCimento.CP_IV:
+				s = 0.38
+			case TipoCimento.CP_V_ARI:
+				s = 0.2
+			case _:
+				raise ValueError("Tipo de cimento não reconhecido.")
 
 		betha1 = math.exp(s * (1 - (28 / j) ** 0.5))
 
@@ -108,11 +114,16 @@ class Concreto(Material):
 	def Eci_MPa(self) -> float:
 		"""Módulo de elasticidade tangente inicial -- usa self.agregado (não recebe mais parâmetro)."""
 		match self.agregado:
-			case TipoAgregado.BASALTO_DIABASIO: alfaE = 1.2
-			case TipoAgregado.GRANITO_GNAISSE: alfaE = 1.0
-			case TipoAgregado.CALCARIO: alfaE = 0.9
-			case TipoAgregado.ARENITO: alfaE = 0.7
-			case _: raise ValueError("Tipo de agregado não reconhecido.")
+			case TipoAgregado.BASALTO_DIABASIO:
+				alfaE = 1.2
+			case TipoAgregado.GRANITO_GNAISSE:
+				alfaE = 1.0
+			case TipoAgregado.CALCARIO:
+				alfaE = 0.9
+			case TipoAgregado.ARENITO:
+				alfaE = 0.7
+			case _:
+				raise ValueError("Tipo de agregado não reconhecido.")
 
 		if self.fck_MPa < 50:
 			return alfaE * 5600.0 * math.sqrt(self.fck_MPa)

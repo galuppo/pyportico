@@ -41,17 +41,14 @@ from __future__ import annotations
 
 import math
 import uuid
-from typing import Dict, List, Optional, Tuple
 
-from ...elementos import Apoio, ApoioRestricao, Barra, Lance, Pavimento, Pilar, Vao, Viga
+from ...elementos import Apoio, ApoioRestricao, Barra, Pavimento, Pilar, Viga
 from ...estrutura import ModeloPortico
 from ...geometria import Ponto
 from ...materiais import Material
 from ...secoes import SecaoRetangular
 from ...vinculos import GrauLiberdade, Restricao, TipoRestricao
-
 from .escritor import IfcWriter, RefEntidadeIfc, ValorEnum, guid_deterministico
-
 
 # Namespace fixo do projeto pra geração determinística de GUID (ver
 # ifc_writer.guid_deterministico). NÃO mudar depois de haver arquivos
@@ -61,15 +58,12 @@ NAMESPACE_PORTICO_ESPACIAL = uuid.UUID("f47ac10b-58cc-4372-a567-0e02b2c3d479")
 
 
 class ExportadorIfc:
-
 	def __init__(self, modelo: ModeloPortico, writer: IfcWriter, unidade_comprimento: str = "m"):
 		if unidade_comprimento != "m":
 			# conversor de unidades do projeto ainda não existe (pendência
 			# maior, registrada à parte) -- por ora só aceita metros, que é
 			# a unidade que o modelo já usa hoje
-			raise NotImplementedError(
-				"Só unidade_comprimento='m' é suportada nesta versão."
-			)
+			raise NotImplementedError("Só unidade_comprimento='m' é suportada nesta versão.")
 		self._modelo = modelo
 		self._w = writer
 
@@ -77,13 +71,13 @@ class ExportadorIfc:
 		# dataclass, __eq__/__hash__ por valor; confirmado que
 		# ModeloPortico.montar() conta com igualdade por valor, não reaproveita
 		# necessariamente o mesmo objeto Ponto entre elementos conectados)
-		self._storeys: Dict[str, RefEntidadeIfc] = {}
-		self._nos_analiticos: Dict[Ponto, RefEntidadeIfc] = {}
-		self._materiais_ifc: Dict[str, RefEntidadeIfc] = {}
+		self._storeys: dict[str, RefEntidadeIfc] = {}
+		self._nos_analiticos: dict[Ponto, RefEntidadeIfc] = {}
+		self._materiais_ifc: dict[str, RefEntidadeIfc] = {}
 
-		self._eixo_padrao: Optional[RefEntidadeIfc] = None
-		self._edificio: Optional[RefEntidadeIfc] = None
-		self._contexto: Optional[RefEntidadeIfc] = None
+		self._eixo_padrao: RefEntidadeIfc | None = None
+		self._edificio: RefEntidadeIfc | None = None
+		self._contexto: RefEntidadeIfc | None = None
 
 	# ------------------------------------------------------------------
 	# ponto de entrada
@@ -127,8 +121,12 @@ class ExportadorIfc:
 		if self._contexto is None:
 			self._contexto = self._w.criar_entidade(
 				"IFCGEOMETRICREPRESENTATIONCONTEXT",
-				ContextIdentifier=None, ContextType="Model", CoordinateSpaceDimension=3,
-				Precision=1e-5, WorldCoordinateSystem=self._eixo_origem(), TrueNorth=None,
+				ContextIdentifier=None,
+				ContextType="Model",
+				CoordinateSpaceDimension=3,
+				Precision=1e-5,
+				WorldCoordinateSystem=self._eixo_origem(),
+				TrueNorth=None,
 			)
 		return self._contexto
 
@@ -142,9 +140,14 @@ class ExportadorIfc:
 		projeto = self._w.criar_entidade(
 			"IFCPROJECT",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, "projeto"),
-			OwnerHistory=None, Name="Portico Espacial", Description=None,
-			ObjectType=None, LongName=None, Phase=None,
-			RepresentationContexts=[self._contexto_geometrico()], UnitsInContext=unidades,
+			OwnerHistory=None,
+			Name="Portico Espacial",
+			Description=None,
+			ObjectType=None,
+			LongName=None,
+			Phase=None,
+			RepresentationContexts=[self._contexto_geometrico()],
+			UnitsInContext=unidades,
 		)
 		placement_site = self._w.criar_entidade(
 			"IFCLOCALPLACEMENT", PlacementRelTo=None, RelativePlacement=self._eixo_origem()
@@ -152,11 +155,19 @@ class ExportadorIfc:
 		site = self._w.criar_entidade(
 			"IFCSITE",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, "site"),
-			OwnerHistory=None, Name="Terreno", Description=None,
-			ObjectType=None, ObjectPlacement=placement_site, Representation=None,
-			LongName=None, CompositionType=ValorEnum("ELEMENT"),
-			RefLatitude=None, RefLongitude=None, RefElevation=None,
-			LandTitleNumber=None, SiteAddress=None,
+			OwnerHistory=None,
+			Name="Terreno",
+			Description=None,
+			ObjectType=None,
+			ObjectPlacement=placement_site,
+			Representation=None,
+			LongName=None,
+			CompositionType=ValorEnum("ELEMENT"),
+			RefLatitude=None,
+			RefLongitude=None,
+			RefElevation=None,
+			LandTitleNumber=None,
+			SiteAddress=None,
 		)
 		placement_edificio = self._w.criar_entidade(
 			"IFCLOCALPLACEMENT", PlacementRelTo=placement_site, RelativePlacement=self._eixo_origem()
@@ -164,22 +175,35 @@ class ExportadorIfc:
 		edificio = self._w.criar_entidade(
 			"IFCBUILDING",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, "edificio"),
-			OwnerHistory=None, Name="Edificio", Description=None,
-			ObjectType=None, ObjectPlacement=placement_edificio, Representation=None,
-			LongName=None, CompositionType=ValorEnum("ELEMENT"),
-			ElevationOfRefHeight=None, ElevationOfTerrain=None, BuildingAddress=None,
+			OwnerHistory=None,
+			Name="Edificio",
+			Description=None,
+			ObjectType=None,
+			ObjectPlacement=placement_edificio,
+			Representation=None,
+			LongName=None,
+			CompositionType=ValorEnum("ELEMENT"),
+			ElevationOfRefHeight=None,
+			ElevationOfTerrain=None,
+			BuildingAddress=None,
 		)
 		self._w.criar_entidade(
 			"IFCRELAGGREGATES",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, "agrega:projeto:site"),
-			OwnerHistory=None, Name=None, Description=None,
-			RelatingObject=projeto, RelatedObjects=[site],
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			RelatingObject=projeto,
+			RelatedObjects=[site],
 		)
 		self._w.criar_entidade(
 			"IFCRELAGGREGATES",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, "agrega:site:edificio"),
-			OwnerHistory=None, Name=None, Description=None,
-			RelatingObject=site, RelatedObjects=[edificio],
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			RelatingObject=site,
+			RelatedObjects=[edificio],
 		)
 		self._edificio = edificio
 		return projeto
@@ -191,15 +215,24 @@ class ExportadorIfc:
 		storey = self._w.criar_entidade(
 			"IFCBUILDINGSTOREY",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"storey:{pavimento.nome}"),
-			OwnerHistory=None, Name=pavimento.nome, Description=None,
-			ObjectType=None, ObjectPlacement=placement, Representation=None,
-			LongName=None, CompositionType=ValorEnum("ELEMENT"), Elevation=float(pavimento.elevacao),
+			OwnerHistory=None,
+			Name=pavimento.nome,
+			Description=None,
+			ObjectType=None,
+			ObjectPlacement=placement,
+			Representation=None,
+			LongName=None,
+			CompositionType=ValorEnum("ELEMENT"),
+			Elevation=float(pavimento.elevacao),
 		)
 		self._w.criar_entidade(
 			"IFCRELAGGREGATES",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"agrega:edificio:{pavimento.nome}"),
-			OwnerHistory=None, Name=None, Description=None,
-			RelatingObject=self._edificio, RelatedObjects=[storey],
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			RelatingObject=self._edificio,
+			RelatedObjects=[storey],
 		)
 		self._storeys[pavimento.nome] = storey
 		return storey
@@ -211,7 +244,7 @@ class ExportadorIfc:
 	# nó analítico + condição de contorno (compartilhado por Pilar/Viga)
 	# ------------------------------------------------------------------
 
-	def _no_analitico(self, ponto: Ponto, apoio: Optional[Apoio]) -> RefEntidadeIfc:
+	def _no_analitico(self, ponto: Ponto, apoio: Apoio | None) -> RefEntidadeIfc:
 		"""
 		IfcStructuralPointConnection num Ponto do domínio, cacheado por
 		VALOR do Ponto -- dois nós com mesmo (x,y,z) são o mesmo nó
@@ -232,16 +265,23 @@ class ExportadorIfc:
 		if isinstance(apoio, ApoioRestricao):
 			condicao = self._escrever_condicao_contorno(apoio.restricao)
 
-		ponto_ifc = self._w.criar_entidade("IFCCARTESIANPOINT", Coordinates=[float(ponto.x), float(ponto.y), float(ponto.z)])
+		ponto_ifc = self._w.criar_entidade(
+			"IFCCARTESIANPOINT", Coordinates=[float(ponto.x), float(ponto.y), float(ponto.z)]
+		)
 		eixo = self._w.criar_entidade("IFCAXIS2PLACEMENT3D", Location=ponto_ifc, Axis=None, RefDirection=None)
 		placement = self._w.criar_entidade("IFCLOCALPLACEMENT", PlacementRelTo=None, RelativePlacement=eixo)
 
 		no = self._w.criar_entidade(
 			"IFCSTRUCTURALPOINTCONNECTION",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"no:{ponto.x}:{ponto.y}:{ponto.z}"),
-			OwnerHistory=None, Name=None, Description=None, ObjectType=None,
-			ObjectPlacement=placement, Representation=None,
-			AppliedCondition=condicao, ConditionCoordinateSystem=None,
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			ObjectType=None,
+			ObjectPlacement=placement,
+			Representation=None,
+			AppliedCondition=condicao,
+			ConditionCoordinateSystem=None,
 		)
 		self._nos_analiticos[ponto] = no
 		return no
@@ -294,15 +334,15 @@ class ExportadorIfc:
 	# seção, material ou rotação -- vale igual pra Pilar e Viga)
 	# ------------------------------------------------------------------
 
-	def _agrupar_indices_por_secao_material_rotacao(self, barras: List[Barra]) -> List[List[int]]:
+	def _agrupar_indices_por_secao_material_rotacao(self, barras: list[Barra]) -> list[list[int]]:
 		"""
 		Agrupa os ÍNDICES de uma sequência ordenada de Barras em sub-listas
 		contíguas de mesma seção, material (por .nome) e rotação. Devolve
 		índices (não os objetos) pra não depender de comparação/identidade
 		de Lance/Vao, que carregam referência circular ao pai.
 		"""
-		grupos: List[List[int]] = []
-		grupo_atual: List[int] = []
+		grupos: list[list[int]] = []
+		grupo_atual: list[int] = []
 		chave_atual = None
 		for indice, barra in enumerate(barras):
 			chave = (barra.secao, barra.material.nome, barra.rotacao)
@@ -323,7 +363,7 @@ class ExportadorIfc:
 
 	def _eixos_locais(
 		self, p_ini: Ponto, p_fim: Ponto, rotacao_graus: float
-	) -> Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float], float]:
+	) -> tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float], float]:
 		"""
 		Calcula (eixo1, eixo2, eixo3, comprimento) pra uma barra de p_ini a
 		p_fim, com a rotação própria aplicada.
@@ -374,16 +414,17 @@ class ExportadorIfc:
 
 		return e1, e2, e3, comprimento
 
-	def _vertices_anti_horario(self, vertices: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
+	def _vertices_anti_horario(self, vertices: list[tuple[float, float]]) -> list[tuple[float, float]]:
 		"""Garante sentido anti-horário (área com sinal positiva) -- mesmo critério do ExportadorDxf,
 		pra normal do perfil sair consistente independente da ordem em que os vértices foram informados."""
 		area_dupla = sum(
-			vertices[i][0] * vertices[(i + 1) % len(vertices)][1] - vertices[(i + 1) % len(vertices)][0] * vertices[i][1]
+			vertices[i][0] * vertices[(i + 1) % len(vertices)][1]
+			- vertices[(i + 1) % len(vertices)][0] * vertices[i][1]
 			for i in range(len(vertices))
 		)
 		return vertices if area_dupla > 0 else list(reversed(vertices))
 
-	def _perfil_pontos(self, secao, referencia_topo: bool) -> List[RefEntidadeIfc]:
+	def _perfil_pontos(self, secao, referencia_topo: bool) -> list[RefEntidadeIfc]:
 		"""
 		Pontos (2D locais) do contorno do perfil, na ordem do laço fechado
 		-- usa `secao.vertices` genericamente (funciona com qualquer
@@ -416,8 +457,13 @@ class ExportadorIfc:
 	# ------------------------------------------------------------------
 
 	def _escrever_elemento_fisico(
-		self, tipo_ifc: str, nome: str, barras_grupo: List[Barra],
-		membros_analiticos: List[RefEntidadeIfc], pavimento: Pavimento, tipo_predefinido: str,
+		self,
+		tipo_ifc: str,
+		nome: str,
+		barras_grupo: list[Barra],
+		membros_analiticos: list[RefEntidadeIfc],
+		pavimento: Pavimento,
+		tipo_predefinido: str,
 		chave_guid: str,
 	) -> RefEntidadeIfc:
 		"""
@@ -436,7 +482,9 @@ class ExportadorIfc:
 		p_fim = barras_grupo[-1].no_final
 		e1, e2, e3, comprimento = self._eixos_locais(p_ini, p_fim, barras_grupo[0].rotacao)
 
-		origem_ifc = self._w.criar_entidade("IFCCARTESIANPOINT", Coordinates=[float(p_ini.x), float(p_ini.y), float(p_ini.z)])
+		origem_ifc = self._w.criar_entidade(
+			"IFCCARTESIANPOINT", Coordinates=[float(p_ini.x), float(p_ini.y), float(p_ini.z)]
+		)
 		eixo1_ifc = self._w.criar_entidade("IFCDIRECTION", DirectionRatios=[float(c) for c in e1])
 		eixo2_ifc = self._w.criar_entidade("IFCDIRECTION", DirectionRatios=[float(c) for c in e2])
 		orientacao = self._w.criar_entidade(
@@ -456,12 +504,18 @@ class ExportadorIfc:
 		# próprio eixo Z local, que dentro do placement já corresponde a eixo1
 		direcao_extrusao = self._w.criar_entidade("IFCDIRECTION", DirectionRatios=[0.0, 0.0, 1.0])
 		solido = self._w.criar_entidade(
-			"IFCEXTRUDEDAREASOLID", SweptArea=perfil, Position=self._eixo_origem(),
-			ExtrudedDirection=direcao_extrusao, Depth=comprimento,
+			"IFCEXTRUDEDAREASOLID",
+			SweptArea=perfil,
+			Position=self._eixo_origem(),
+			ExtrudedDirection=direcao_extrusao,
+			Depth=comprimento,
 		)
 		representacao = self._w.criar_entidade(
-			"IFCSHAPEREPRESENTATION", ContextOfItems=self._contexto_geometrico(),
-			RepresentationIdentifier="Body", RepresentationType="SweptSolid", Items=[solido],
+			"IFCSHAPEREPRESENTATION",
+			ContextOfItems=self._contexto_geometrico(),
+			RepresentationIdentifier="Body",
+			RepresentationType="SweptSolid",
+			Items=[solido],
 		)
 		forma = self._w.criar_entidade(
 			"IFCPRODUCTDEFINITIONSHAPE", Name=None, Description=None, Representations=[representacao]
@@ -470,29 +524,44 @@ class ExportadorIfc:
 		elemento = self._w.criar_entidade(
 			tipo_ifc,
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, chave_guid),
-			OwnerHistory=None, Name=nome, Description=None, ObjectType=None,
-			ObjectPlacement=placement, Representation=forma,
-			Tag=None, PredefinedType=ValorEnum(tipo_predefinido),
+			OwnerHistory=None,
+			Name=nome,
+			Description=None,
+			ObjectType=None,
+			ObjectPlacement=placement,
+			Representation=forma,
+			Tag=None,
+			PredefinedType=ValorEnum(tipo_predefinido),
 		)
 
 		self._w.criar_entidade(
 			"IFCRELASSIGNSTOPRODUCT",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"assign:{chave_guid}"),
-			OwnerHistory=None, Name=None, Description=None,
-			RelatedObjects=membros_analiticos, RelatedObjectsType=None, RelatingProduct=elemento,
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			RelatedObjects=membros_analiticos,
+			RelatedObjectsType=None,
+			RelatingProduct=elemento,
 		)
 		self._w.criar_entidade(
 			"IFCRELCONTAINEDINSPATIALSTRUCTURE",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"contido:{chave_guid}"),
-			OwnerHistory=None, Name=None, Description=None,
-			RelatedElements=[elemento], RelatingStructure=self._storey_de(pavimento),
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			RelatedElements=[elemento],
+			RelatingStructure=self._storey_de(pavimento),
 		)
 		material_ifc = self._material_ifc(barras_grupo[0].material)
 		self._w.criar_entidade(
 			"IFCRELASSOCIATESMATERIAL",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"material:{chave_guid}"),
-			OwnerHistory=None, Name=None, Description=None,
-			RelatedObjects=[elemento], RelatingMaterial=material_ifc,
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			RelatedObjects=[elemento],
+			RelatingMaterial=material_ifc,
 		)
 		return elemento
 
@@ -501,34 +570,44 @@ class ExportadorIfc:
 	# ------------------------------------------------------------------
 
 	def _escrever_pilar(self, pilar: Pilar) -> None:
-		lances = sorted(pilar.lances, key=lambda l: l.indice)
+		lances = sorted(pilar.lances, key=lambda lance: lance.indice)
 
 		# nós analíticos: o da base carrega Pilar.apoio_base, o do topo
 		# carrega Pilar.apoio_topo; quebras intermediárias (entre Lances)
 		# não têm Apoio nenhum (Pilar não guarda apoio em quebra
 		# intermediária, ver docstring de Lance em elementos.py)
-		nos: List[RefEntidadeIfc] = [self._no_analitico(lances[0].no_inicial, pilar.apoio_base)]
+		nos: list[RefEntidadeIfc] = [self._no_analitico(lances[0].no_inicial, pilar.apoio_base)]
 		for indice, lance in enumerate(lances):
 			apoio = pilar.apoio_topo if indice == len(lances) - 1 else None
 			nos.append(self._no_analitico(lance.no_final, apoio))
 
-		barras_analiticas: List[RefEntidadeIfc] = []
+		barras_analiticas: list[RefEntidadeIfc] = []
 		for indice, lance in enumerate(lances):
 			barra_ifc = self._w.criar_entidade(
 				"IFCSTRUCTURALCURVEMEMBER",
 				GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"barra:{lance.id}"),
-				OwnerHistory=None, Name=lance.nome, Description=None, ObjectType=None,
-				ObjectPlacement=None, Representation=None,
-				PredefinedType=ValorEnum("RIGID_JOINED_MEMBER"), Axis=None,
+				OwnerHistory=None,
+				Name=lance.nome,
+				Description=None,
+				ObjectType=None,
+				ObjectPlacement=None,
+				Representation=None,
+				PredefinedType=ValorEnum("RIGID_JOINED_MEMBER"),
+				Axis=None,
 			)
 			barras_analiticas.append(barra_ifc)
 			for extremidade, no in (("ini", nos[indice]), ("fim", nos[indice + 1])):
 				self._w.criar_entidade(
 					"IFCRELCONNECTSSTRUCTURALMEMBER",
 					GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"conecta:{lance.id}:{extremidade}"),
-					OwnerHistory=None, Name=None, Description=None,
-					RelatingStructuralMember=barra_ifc, RelatedStructuralConnection=no,
-					AppliedCondition=None, AdditionalConditions=None, SupportedLength=None,
+					OwnerHistory=None,
+					Name=None,
+					Description=None,
+					RelatingStructuralMember=barra_ifc,
+					RelatedStructuralConnection=no,
+					AppliedCondition=None,
+					AdditionalConditions=None,
+					SupportedLength=None,
 					ConditionCoordinateSystem=None,
 				)
 
@@ -536,9 +615,12 @@ class ExportadorIfc:
 			grupo_lances = [lances[i] for i in grupo_indices]
 			grupo_analiticos = [barras_analiticas[i] for i in grupo_indices]
 			self._escrever_elemento_fisico(
-				tipo_ifc="IFCCOLUMN", nome=pilar.nome, barras_grupo=grupo_lances,
+				tipo_ifc="IFCCOLUMN",
+				nome=pilar.nome,
+				barras_grupo=grupo_lances,
 				membros_analiticos=grupo_analiticos,
-				pavimento=grupo_lances[0].pavimento, tipo_predefinido="COLUMN",
+				pavimento=grupo_lances[0].pavimento,
+				tipo_predefinido="COLUMN",
 				chave_guid=f"fisico:pilar:{grupo_lances[0].id}",
 			)
 
@@ -565,7 +647,7 @@ class ExportadorIfc:
 	def _escrever_viga(self, viga: Viga) -> None:
 		vaos = sorted(viga.vaos, key=lambda v: v.indice)
 
-		barras_analiticas: List[RefEntidadeIfc] = []
+		barras_analiticas: list[RefEntidadeIfc] = []
 		for vao in vaos:
 			no_ini = self._no_analitico(vao.no_inicial, vao.apoio_inicial)
 			no_fim = self._no_analitico(vao.no_final, vao.apoio_final)
@@ -573,18 +655,28 @@ class ExportadorIfc:
 			barra_ifc = self._w.criar_entidade(
 				"IFCSTRUCTURALCURVEMEMBER",
 				GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"barra:{vao.id}"),
-				OwnerHistory=None, Name=vao.nome, Description=None, ObjectType=None,
-				ObjectPlacement=None, Representation=None,
-				PredefinedType=ValorEnum("RIGID_JOINED_MEMBER"), Axis=None,
+				OwnerHistory=None,
+				Name=vao.nome,
+				Description=None,
+				ObjectType=None,
+				ObjectPlacement=None,
+				Representation=None,
+				PredefinedType=ValorEnum("RIGID_JOINED_MEMBER"),
+				Axis=None,
 			)
 			barras_analiticas.append(barra_ifc)
 			for extremidade, no in (("ini", no_ini), ("fim", no_fim)):
 				self._w.criar_entidade(
 					"IFCRELCONNECTSSTRUCTURALMEMBER",
 					GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"conecta:{vao.id}:{extremidade}"),
-					OwnerHistory=None, Name=None, Description=None,
-					RelatingStructuralMember=barra_ifc, RelatedStructuralConnection=no,
-					AppliedCondition=None, AdditionalConditions=None, SupportedLength=None,
+					OwnerHistory=None,
+					Name=None,
+					Description=None,
+					RelatingStructuralMember=barra_ifc,
+					RelatedStructuralConnection=no,
+					AppliedCondition=None,
+					AdditionalConditions=None,
+					SupportedLength=None,
 					ConditionCoordinateSystem=None,
 				)
 
@@ -594,9 +686,12 @@ class ExportadorIfc:
 			z_medio = sum((v.no_inicial.z + v.no_final.z) / 2 for v in grupo_vaos) / len(grupo_vaos)
 			pavimento = self._pavimento_mais_proximo(viga, z_medio)
 			self._escrever_elemento_fisico(
-				tipo_ifc="IFCBEAM", nome=viga.nome, barras_grupo=grupo_vaos,
+				tipo_ifc="IFCBEAM",
+				nome=viga.nome,
+				barras_grupo=grupo_vaos,
 				membros_analiticos=grupo_analiticos,
-				pavimento=pavimento, tipo_predefinido="BEAM",
+				pavimento=pavimento,
+				tipo_predefinido="BEAM",
 				chave_guid=f"fisico:viga:{grupo_vaos[0].id}",
 			)
 
@@ -613,20 +708,30 @@ class ExportadorIfc:
 		barra_ifc = self._w.criar_entidade(
 			"IFCSTRUCTURALCURVEMEMBER",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"barra:{link.id}"),
-			OwnerHistory=None, Name=f"Link.{link.id}", Description=None, ObjectType=None,
-			ObjectPlacement=None, Representation=None,
+			OwnerHistory=None,
+			Name=f"Link.{link.id}",
+			Description=None,
+			ObjectType=None,
+			ObjectPlacement=None,
+			Representation=None,
 			# RIGID_JOINED_MEMBER (não PIN_JOINED_MEMBER): o Link transmite
 			# momento e cortante, não só força axial -- mesmo a descrição
 			# oficial do enum mencionando "viga" em vez de "conector rígido"
-			PredefinedType=ValorEnum("RIGID_JOINED_MEMBER"), Axis=None,
+			PredefinedType=ValorEnum("RIGID_JOINED_MEMBER"),
+			Axis=None,
 		)
 		for extremidade, no in (("ini", no_ini), ("fim", no_fim)):
 			self._w.criar_entidade(
 				"IFCRELCONNECTSSTRUCTURALMEMBER",
 				GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"conecta:{link.id}:{extremidade}"),
-				OwnerHistory=None, Name=None, Description=None,
-				RelatingStructuralMember=barra_ifc, RelatedStructuralConnection=no,
-				AppliedCondition=None, AdditionalConditions=None, SupportedLength=None,
+				OwnerHistory=None,
+				Name=None,
+				Description=None,
+				RelatingStructuralMember=barra_ifc,
+				RelatedStructuralConnection=no,
+				AppliedCondition=None,
+				AdditionalConditions=None,
+				SupportedLength=None,
 				ConditionCoordinateSystem=None,
 			)
 
@@ -640,33 +745,38 @@ class ExportadorIfc:
 
 	def _escrever_laje(self, laje) -> None:
 		if laje.grelha is None or not laje.grelha.poligono:
-			raise ValueError(
-				f"Laje '{laje.nome}' sem grelha montada -- chame modelo.montar() "
-				"antes de exportar."
-			)
+			raise ValueError(f"Laje '{laje.nome}' sem grelha montada -- chame modelo.montar() antes de exportar.")
 
 		barras_grid = list(laje.barras_grid_x) + list(laje.barras_grid_y)
-		membros_analiticos: List[RefEntidadeIfc] = []
+		membros_analiticos: list[RefEntidadeIfc] = []
 		for barra in barras_grid:
 			no_ini = self._no_analitico(barra.no_inicial, apoio=None)
 			no_fim = self._no_analitico(barra.no_final, apoio=None)
 			barra_ifc = self._w.criar_entidade(
 				"IFCSTRUCTURALCURVEMEMBER",
 				GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"barra:{barra.id}"),
-				OwnerHistory=None, Name=None, Description=None, ObjectType=None,
-				ObjectPlacement=None, Representation=None,
-				PredefinedType=ValorEnum("RIGID_JOINED_MEMBER"), Axis=None,
+				OwnerHistory=None,
+				Name=None,
+				Description=None,
+				ObjectType=None,
+				ObjectPlacement=None,
+				Representation=None,
+				PredefinedType=ValorEnum("RIGID_JOINED_MEMBER"),
+				Axis=None,
 			)
 			membros_analiticos.append(barra_ifc)
 			for extremidade, no in (("ini", no_ini), ("fim", no_fim)):
 				self._w.criar_entidade(
 					"IFCRELCONNECTSSTRUCTURALMEMBER",
-					GlobalId=guid_deterministico(
-						NAMESPACE_PORTICO_ESPACIAL, f"conecta:{barra.id}:{extremidade}"
-					),
-					OwnerHistory=None, Name=None, Description=None,
-					RelatingStructuralMember=barra_ifc, RelatedStructuralConnection=no,
-					AppliedCondition=None, AdditionalConditions=None, SupportedLength=None,
+					GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"conecta:{barra.id}:{extremidade}"),
+					OwnerHistory=None,
+					Name=None,
+					Description=None,
+					RelatingStructuralMember=barra_ifc,
+					RelatedStructuralConnection=no,
+					AppliedCondition=None,
+					AdditionalConditions=None,
+					SupportedLength=None,
 					ConditionCoordinateSystem=None,
 				)
 
@@ -698,7 +808,9 @@ class ExportadorIfc:
 		]
 		contorno_ifc = self._w.criar_entidade("IFCPOLYLINE", Points=pontos_perfil + [pontos_perfil[0]])
 		perfil = self._w.criar_entidade(
-			"IFCARBITRARYCLOSEDPROFILEDEF", ProfileType=ValorEnum("AREA"), ProfileName=None,
+			"IFCARBITRARYCLOSEDPROFILEDEF",
+			ProfileType=ValorEnum("AREA"),
+			ProfileName=None,
 			OuterCurve=contorno_ifc,
 		)
 		# extrusão PRA BAIXO (contorno = topo) -- Position fica com os eixos
@@ -706,12 +818,18 @@ class ExportadorIfc:
 		# aponta pra baixo no mundo real
 		direcao_extrusao = self._w.criar_entidade("IFCDIRECTION", DirectionRatios=[0.0, 0.0, -1.0])
 		solido = self._w.criar_entidade(
-			"IFCEXTRUDEDAREASOLID", SweptArea=perfil, Position=self._eixo_origem(),
-			ExtrudedDirection=direcao_extrusao, Depth=float(laje.secao.altura),
+			"IFCEXTRUDEDAREASOLID",
+			SweptArea=perfil,
+			Position=self._eixo_origem(),
+			ExtrudedDirection=direcao_extrusao,
+			Depth=float(laje.secao.altura),
 		)
 		representacao = self._w.criar_entidade(
-			"IFCSHAPEREPRESENTATION", ContextOfItems=self._contexto_geometrico(),
-			RepresentationIdentifier="Body", RepresentationType="SweptSolid", Items=[solido],
+			"IFCSHAPEREPRESENTATION",
+			ContextOfItems=self._contexto_geometrico(),
+			RepresentationIdentifier="Body",
+			RepresentationType="SweptSolid",
+			Items=[solido],
 		)
 		forma = self._w.criar_entidade(
 			"IFCPRODUCTDEFINITIONSHAPE", Name=None, Description=None, Representations=[representacao]
@@ -721,28 +839,43 @@ class ExportadorIfc:
 		slab = self._w.criar_entidade(
 			"IFCSLAB",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, chave_guid),
-			OwnerHistory=None, Name=laje.nome, Description=None, ObjectType=None,
-			ObjectPlacement=placement, Representation=forma,
-			Tag=None, PredefinedType=ValorEnum("FLOOR"),
+			OwnerHistory=None,
+			Name=laje.nome,
+			Description=None,
+			ObjectType=None,
+			ObjectPlacement=placement,
+			Representation=forma,
+			Tag=None,
+			PredefinedType=ValorEnum("FLOOR"),
 		)
 
 		if membros_analiticos:
 			self._w.criar_entidade(
 				"IFCRELASSIGNSTOPRODUCT",
 				GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"assign:{chave_guid}"),
-				OwnerHistory=None, Name=None, Description=None,
-				RelatedObjects=membros_analiticos, RelatedObjectsType=None, RelatingProduct=slab,
+				OwnerHistory=None,
+				Name=None,
+				Description=None,
+				RelatedObjects=membros_analiticos,
+				RelatedObjectsType=None,
+				RelatingProduct=slab,
 			)
 		self._w.criar_entidade(
 			"IFCRELCONTAINEDINSPATIALSTRUCTURE",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"contido:{chave_guid}"),
-			OwnerHistory=None, Name=None, Description=None,
-			RelatedElements=[slab], RelatingStructure=self._storey_de(laje.pavimento),
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			RelatedElements=[slab],
+			RelatingStructure=self._storey_de(laje.pavimento),
 		)
 		material_ifc = self._material_ifc(laje.material)
 		self._w.criar_entidade(
 			"IFCRELASSOCIATESMATERIAL",
 			GlobalId=guid_deterministico(NAMESPACE_PORTICO_ESPACIAL, f"material:{chave_guid}"),
-			OwnerHistory=None, Name=None, Description=None,
-			RelatedObjects=[slab], RelatingMaterial=material_ifc,
+			OwnerHistory=None,
+			Name=None,
+			Description=None,
+			RelatedObjects=[slab],
+			RelatingMaterial=material_ifc,
 		)

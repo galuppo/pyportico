@@ -1,11 +1,10 @@
-from typing import List, Tuple, Dict, Optional
-
-import numpy as np
 import bisect
 
-Ponto3D = Tuple[float, float, float]
-Ponto2D = Tuple[float, float]
-Barra3D = Tuple[Ponto3D, Ponto3D]
+import numpy as np
+
+Ponto3D = tuple[float, float, float]
+Ponto2D = tuple[float, float]
+Barra3D = tuple[Ponto3D, Ponto3D]
 
 
 class Grelha:
@@ -30,16 +29,16 @@ class Grelha:
 	  e os cruzamentos internos da malha, todos contidos em alguma barra.
 	"""
 
-	_TOL = 1e-6               # tolerância para deduplicação de pontos no plano local
-	_TOL_PLANARIDADE = 1e-6   # tolerância (distância) para aceitar a poligonal como planar
+	_TOL = 1e-6  # tolerância para deduplicação de pontos no plano local
+	_TOL_PLANARIDADE = 1e-6  # tolerância (distância) para aceitar a poligonal como planar
 	_TOL_ANGULO_MINIMO_GRAUS = 0.5  # ângulo mínimo aceitável entre direcao_e1 e o plano
 	_CASAS_DECIMAIS = 6  # compatível com _TOL (1e-6 ~ 6 casas decimais)
 
-	def __init__(self, poligono: List[Ponto3D], direcao_e1: Ponto3D):
+	def __init__(self, poligono: list[Ponto3D], direcao_e1: Ponto3D):
 		if len(poligono) < 3:
 			raise ValueError("A poligonal deve ter ao menos 3 vértices.")
 
-		self.poligono: List[Ponto3D] = list(poligono)
+		self.poligono: list[Ponto3D] = list(poligono)
 		self._pontos_np = np.array(self.poligono, dtype=float)  # shape (n, 3)
 
 		self._origem_plano = self._pontos_np[0]
@@ -49,14 +48,14 @@ class Grelha:
 
 		self._poligono_local: np.ndarray = self._para_local(self._pontos_np)  # shape (n, 2)
 
-		self._pontos: List[Ponto3D] = []
-		self._pontos_locais: List[Ponto2D] = []
-		self._barras_x: List[Barra3D] = []
-		self._barras_y: List[Barra3D] = []
+		self._pontos: list[Ponto3D] = []
+		self._pontos_locais: list[Ponto2D] = []
+		self._barras_x: list[Barra3D] = []
+		self._barras_y: list[Barra3D] = []
 		self._espacamento_x_atual: float = -1
 		self._espacamento_y_atual: float = -1
-		self._coeficientes: Dict[Tuple[int, int], float] = {}   # chave (u,v) -> coeficiente
-		self._coeficientes_lista: List[float] = []              # alinhada com self._pontos
+		self._coeficientes: dict[tuple[int, int], float] = {}  # chave (u,v) -> coeficiente
+		self._coeficientes_lista: list[float] = []  # alinhada com self._pontos
 
 	# ------------------------------------------------------------------
 	# Geração
@@ -66,7 +65,7 @@ class Grelha:
 		self,
 		espacamento_x: float,
 		espacamento_y: float,
-		origem: Optional[Ponto3D] = None,
+		origem: Ponto3D | None = None,
 		origem_no_primeiro_vertice: bool = False,
 	) -> None:
 		"""
@@ -93,9 +92,9 @@ class Grelha:
 
 		linhas_u, linhas_v = self._linhas_da_malha(espacamento_x, espacamento_y, origem_local)
 
-		pontos_unicos: Dict[Tuple[int, int], Ponto2D] = {}
-		barras_u: List[Tuple[Ponto2D, Ponto2D]] = []
-		barras_v: List[Tuple[Ponto2D, Ponto2D]] = []
+		pontos_unicos: dict[tuple[int, int], Ponto2D] = {}
+		barras_u: list[tuple[Ponto2D, Ponto2D]] = []
+		barras_v: list[tuple[Ponto2D, Ponto2D]] = []
 
 		def registrar(p: Ponto2D) -> Ponto2D:
 			p = (round(p[0], self._CASAS_DECIMAIS), round(p[1], self._CASAS_DECIMAIS))
@@ -141,19 +140,19 @@ class Grelha:
 	# Consultas
 	# ------------------------------------------------------------------
 
-	def pontos(self) -> List[Ponto3D]:
+	def pontos(self) -> list[Ponto3D]:
 		"""Retorna os pontos da grelha gerada, em coordenadas globais (x, y, z)."""
 		return list(self._pontos)
 
-	def barras(self) -> List[Barra3D]:
+	def barras(self) -> list[Barra3D]:
 		"""Retorna todas as barras da grelha (direção X local + direção Y local)."""
 		return self._barras_x + self._barras_y
 
-	def barras_x(self) -> List[Barra3D]:
+	def barras_x(self) -> list[Barra3D]:
 		"""Barras orientadas na direção local e1 (v constante ao longo da barra)."""
 		return list(self._barras_x)
 
-	def barras_y(self) -> List[Barra3D]:
+	def barras_y(self) -> list[Barra3D]:
 		"""Barras orientadas na direção local e2 (u constante ao longo da barra)."""
 		return list(self._barras_y)
 
@@ -182,13 +181,11 @@ class Grelha:
 		chave = self._chave(ponto_local)
 
 		if chave not in self._coeficientes:
-			raise ValueError(
-				f"O ponto {ponto} não pertence à grelha gerada (tolerância: {self._TOL})."
-			)
+			raise ValueError(f"O ponto {ponto} não pertence à grelha gerada (tolerância: {self._TOL}).")
 
 		return self._coeficientes[chave]
 
-	def coeficientes_carga(self) -> List[float]:
+	def coeficientes_carga(self) -> list[float]:
 		"""
 		Retorna os coeficientes de carga (área de influência) de todos os pontos
 		da grelha, na mesma ordem retornada por pontos().
@@ -218,7 +215,7 @@ class Grelha:
 			raise ValueError("Poligonal degenerada: não foi possível determinar um plano (normal nula).")
 		return normal / norma
 
-	def _construir_base_local(self, direcao_e1: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+	def _construir_base_local(self, direcao_e1: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 		"""
 		Projeta `direcao_e1` sobre o plano e normaliza para obter e1.
 		e2 = normal × e1 completa a base ortonormal.
@@ -231,9 +228,7 @@ class Grelha:
 			raise ValueError("direcao_e1 não pode ser um vetor nulo.")
 
 		# ângulo entre direcao_e1 e a normal (0° = paralela à normal, 90° = perpendicular à normal)
-		cos_angulo_normal = np.clip(
-			abs(np.dot(direcao_e1, self._normal)) / norma_direcao, -1.0, 1.0
-		)
+		cos_angulo_normal = np.clip(abs(np.dot(direcao_e1, self._normal)) / norma_direcao, -1.0, 1.0)
 		angulo_com_normal = np.degrees(np.arccos(cos_angulo_normal))
 
 		# ângulo entre direcao_e1 e o plano (0° = contida no plano, 90° = paralela à normal)
@@ -277,20 +272,18 @@ class Grelha:
 	def _para_global(self, p: Ponto2D) -> Ponto3D:
 		u, v = p
 		ponto_global = self._origem_plano + u * self._e1 + v * self._e2
-		return (float(ponto_global[0]),
-				float(ponto_global[1]),
-				float(ponto_global[2]))
+		return (float(ponto_global[0]), float(ponto_global[1]), float(ponto_global[2]))
 
 	# ------------------------------------------------------------------
 	# Métodos internos (geometria 2D no plano local)
 	# ------------------------------------------------------------------
 
-	def _chave(self, p: Ponto2D) -> Tuple[int, int]:
+	def _chave(self, p: Ponto2D) -> tuple[int, int]:
 		return (round(p[0] / self._TOL), round(p[1] / self._TOL))
 
 	def _linhas_da_malha(
 		self, espacamento_x: float, espacamento_y: float, origem_local: Ponto2D
-	) -> Tuple[List[float], List[float]]:
+	) -> tuple[list[float], list[float]]:
 		us = self._poligono_local[:, 0]
 		vs = self._poligono_local[:, 1]
 		u_min, u_max = float(us.min()), float(us.max())
@@ -302,9 +295,7 @@ class Grelha:
 			self._linhas_eixo(v_min, v_max, v0, espacamento_y),
 		)
 
-	def _linhas_eixo(
-		self, minimo: float, maximo: float, origem: float, espacamento: float
-	) -> List[float]:
+	def _linhas_eixo(self, minimo: float, maximo: float, origem: float, espacamento: float) -> list[float]:
 		"""
 		Posições das linhas (origem + k * espacamento) estritamente após `minimo`
 		e até `maximo`. Calcula cada linha pelo índice k (sem acumular somas) e
@@ -313,12 +304,9 @@ class Grelha:
 		"""
 		k_ini = int(np.floor((minimo - origem) / espacamento + self._TOL)) + 1
 		k_fim = int(np.floor((maximo - origem) / espacamento + self._TOL))
-		return [
-			round(origem + k * espacamento, self._CASAS_DECIMAIS)
-			for k in range(k_ini, k_fim + 1)
-		]
+		return [round(origem + k * espacamento, self._CASAS_DECIMAIS) for k in range(k_ini, k_fim + 1)]
 
-	def _intersecoes_verticais(self, u: float) -> List[float]:
+	def _intersecoes_verticais(self, u: float) -> list[float]:
 		vs = []
 		n = len(self._poligono_local)
 		for i in range(n):
@@ -331,7 +319,7 @@ class Grelha:
 				vs.append(v1 + t * (v2 - v1))
 		return sorted(vs)
 
-	def _intersecoes_horizontais(self, v: float) -> List[float]:
+	def _intersecoes_horizontais(self, v: float) -> list[float]:
 		us = []
 		n = len(self._poligono_local)
 		for i in range(n):
@@ -359,8 +347,8 @@ class Grelha:
 		com self._pontos). Custo O(n log n) total.
 		"""
 		# agrupa pontos por linha: fixando v -> lista de u; fixando u -> lista de v
-		grupos_por_v: Dict[int, List[float]] = {}
-		grupos_por_u: Dict[int, List[float]] = {}
+		grupos_por_v: dict[int, list[float]] = {}
+		grupos_por_u: dict[int, list[float]] = {}
 
 		for u, v in self._pontos_locais:
 			grupos_por_v.setdefault(self._chave_escalar(v), []).append(u)
@@ -378,12 +366,8 @@ class Grelha:
 			lista_u = grupos_por_v[self._chave_escalar(v)]
 			lista_v = grupos_por_u[self._chave_escalar(u)]
 
-			comprimento_u = self._comprimento_tributario_lista(
-				lista_u, u, self._espacamento_x_atual
-			)
-			comprimento_v = self._comprimento_tributario_lista(
-				lista_v, v, self._espacamento_y_atual
-			)
+			comprimento_u = self._comprimento_tributario_lista(lista_u, u, self._espacamento_x_atual)
+			comprimento_v = self._comprimento_tributario_lista(lista_v, v, self._espacamento_y_atual)
 
 			coeficiente = comprimento_u * comprimento_v
 			chave = self._chave((u, v))
@@ -391,7 +375,7 @@ class Grelha:
 			self._coeficientes_lista.append(coeficiente)
 
 	def _comprimento_tributario_lista(
-		self, valores_ordenados: List[float], valor: float, espacamento_nominal: float
+		self, valores_ordenados: list[float], valor: float, espacamento_nominal: float
 	) -> float:
 		"""
 		Comprimento tributário (regra do ponto médio) de `valor` dentro de
@@ -418,7 +402,6 @@ class Grelha:
 			return (valores_ordenados[idx + 1] - valores_ordenados[idx - 1]) / 2.0
 
 
-
 if __name__ == "__main__":
 	# Exemplo 1: poligonal horizontal (z constante), e1 forçado no eixo global X
 	poligonal_horizontal = [
@@ -439,7 +422,7 @@ if __name__ == "__main__":
 	# todos de uma vez, já alinhados com pontos()
 	coefs = grelha.coeficientes_carga()
 	soma = sum(coefs)
-	print(f"Soma dos coeficientes: {soma:.4f}") # deve se aproximar da área do polígono
+	print(f"Soma dos coeficientes: {soma:.4f}")  # deve se aproximar da área do polígono
 
 	# Exemplo 2: poligonal inclinada (plano oblíquo, ex.: laje de rampa)
 	# direcao_e1 pode ser qualquer vetor não paralelo à normal -- aqui uso a direção
@@ -452,7 +435,7 @@ if __name__ == "__main__":
 		(0.0, 5.0, 0.0),
 	]
 	grelha_inclinada = Grelha(poligonal_inclinada, direcao_e1=(1.0, 0.0, 0.0))
-	grelha_inclinada.gerar_grelha(espacamento_x=.1, espacamento_y=.1)
+	grelha_inclinada.gerar_grelha(espacamento_x=0.1, espacamento_y=0.1)
 	print(f"[Inclinada] Pontos: {grelha_inclinada.quantidade_pontos}, Barras: {grelha_inclinada.quantidade_barras}")
 	for p in grelha_inclinada.pontos():
 		print(p)
@@ -460,7 +443,7 @@ if __name__ == "__main__":
 	# todos de uma vez, já alinhados com pontos()
 	coefs = grelha_inclinada.coeficientes_carga()
 	soma = sum(coefs)
-	print(f"Soma dos coeficientes: {soma:.4f}") # deve se aproximar da área do polígono
+	print(f"Soma dos coeficientes: {soma:.4f}")  # deve se aproximar da área do polígono
 	try:
 		grelha_inclinada.coeficiente_carga((999.0, 999.0, 3.0))
 	except ValueError as e:

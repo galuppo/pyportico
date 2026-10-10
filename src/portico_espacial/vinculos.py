@@ -82,7 +82,7 @@ class Restricao:
 	rotacao_z: GrauLiberdade = field(default_factory=lambda: _LIVRE)
 
 	@classmethod
-	def engastado(cls, no: Ponto) -> "Restricao":
+	def engastado(cls, no: Ponto) -> Restricao:
 		"""Engastamento perfeito: todos os 6 graus de liberdade restringidos."""
 		return cls(
 			no=no,
@@ -95,7 +95,7 @@ class Restricao:
 		)
 
 	@classmethod
-	def apoio_simples(cls, no: Ponto) -> "Restricao":
+	def apoio_simples(cls, no: Ponto) -> Restricao:
 		"""Apoio articulado: as 3 translações restringidas, rotações livres."""
 		return cls(
 			no=no,
@@ -105,7 +105,7 @@ class Restricao:
 		)
 
 	@classmethod
-	def elastico_uniforme(cls, no: Ponto, rigidez_translacao: float) -> "Restricao":
+	def elastico_uniforme(cls, no: Ponto, rigidez_translacao: float) -> Restricao:
 		"""
 		Aproximação simples de apoio elástico (ex.: solo de fundação):
 		as 3 translações com a mesma rigidez, rotações livres.

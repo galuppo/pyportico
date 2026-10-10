@@ -18,6 +18,7 @@ O modelo de domínio não conhece o SAP2000, o DXF ou o IFC. Cada formato de sa�
 - [Convenções do projeto](#convenções-do-projeto)
 - [Exportadores](#exportadores)
 - [Estrutura do projeto](#estrutura-do-projeto)
+- [Desenvolvimento](#desenvolvimento)
 - [Limitações conhecidas](#limitações-conhecidas)
 - [Licença](#licença)
 
@@ -57,17 +58,27 @@ O modelo de domínio não conhece o SAP2000, o DXF ou o IFC. Cada formato de sa�
 
 **Requisitos**
 
-- Python **3.10 ou superior** (o código usa `match/case` e a sintaxe `X | None`). <!-- CONFIRMAR versão mínima -->
-- [`numpy`](https://numpy.org/) (geração da grelha das lajes)
-- [`ezdxf`](https://ezdxf.mozman.at/) (exportador DXF)
+- Python **3.10 ou superior** (o código usa `match/case` e a sintaxe `X | None`).
+- [`numpy`](https://numpy.org/) (geração da grelha das lajes), instalado automaticamente.
+- [`ezdxf`](https://ezdxf.mozman.at/) (exportador DXF), opcional, via extra `[dxf]`.
+
+Instalação direta do GitHub:
+
+<!-- CONFIRMAR: substituir <usuario>/<repositorio> pelo endereço real -->
+
+```bash
+pip install "portico-espacial[dxf] @ git+https://github.com/<usuario>/<repositorio>.git"
+```
+
+Ou a partir de um clone local:
 
 ```bash
 git clone https://github.com/<usuario>/<repositorio>.git
 cd <repositorio>
-pip install numpy ezdxf
+pip install ".[dxf]"
 ```
 
-<!-- CONFIRMAR: nome do repositório/pacote e se haverá pyproject.toml / requirements.txt -->
+Sem o extra `[dxf]`, todo o modelo e o exportador IFC funcionam; apenas `portico_espacial.exportadores.dxf` exige o `ezdxf`.
 
 O `ifcopenshell` **não** é necessário para exportar IFC (a escrita STEP é feita manualmente). Ele é útil apenas para validar/visualizar os arquivos gerados.
 
@@ -78,12 +89,15 @@ O `ifcopenshell` **não** é necessário para exportar IFC (a escrita STEP é fe
 Pórtico simples: dois pilares engastados na base e uma viga entre eles.
 
 ```python
-from portico_espacial.concreto import Concreto, TipoAgregado
-from portico_espacial.elementos import ApoioRestricao
-from portico_espacial.estrutura import ModeloPortico
-from portico_espacial.geometria import Ponto
-from portico_espacial.secoes import SecaoRetangular
-from portico_espacial.vinculos import Restricao
+from portico_espacial import (
+	ApoioRestricao,
+	Concreto,
+	ModeloPortico,
+	Ponto,
+	Restricao,
+	SecaoRetangular,
+	TipoAgregado,
+)
 
 # 1) Modelo e pavimentos (devem existir ANTES de qualquer elemento)
 modelo = ModeloPortico()
@@ -97,19 +111,25 @@ secao_viga = SecaoRetangular(largura=0.20, altura=0.50)
 
 # 3) Pilares (base no Térreo, topo no Pav1) com fundação engastada
 for x in (0.0, 5.0):
-    pilar = modelo.criar_pilar(
-        pavimento_base=terreo, x_base=x, y_base=0.0,
-        pavimento_topo=pav1, x_topo=x, y_topo=0.0,
-        secao=secao_pilar, material=c30,
-    )
-    pilar.apoio_base = ApoioRestricao(Restricao.engastado(pilar.ponto_base))
+	pilar = modelo.criar_pilar(
+		pavimento_base=terreo,
+		x_base=x,
+		y_base=0.0,
+		pavimento_topo=pav1,
+		x_topo=x,
+		y_topo=0.0,
+		secao=secao_pilar,
+		material=c30,
+	)
+	pilar.apoio_base = ApoioRestricao(Restricao.engastado(pilar.ponto_base))
 
 # 4) Viga: os pontos representam o TOPO da seção (ver Convenções)
 modelo.criar_viga(
-    ponto_inicial=Ponto(0.0, 0.0, 3.0),
-    ponto_final=Ponto(5.0, 0.0, 3.0),
-    secao=secao_viga, material=c30,
-    pavimentos=[pav1],
+	ponto_inicial=Ponto(0.0, 0.0, 3.0),
+	ponto_final=Ponto(5.0, 0.0, 3.0),
+	secao=secao_viga,
+	material=c30,
+	pavimentos=[pav1],
 )
 
 # 5) Resolve interseções e deriva Lances, Vãos, Apoios e Links
@@ -123,7 +143,7 @@ ExportadorDxf().exportar_solido(modelo, "portico.dxf")
 ExportadorIfc(modelo, EscritorIfcManual()).exportar("portico.ifc")
 ```
 
-> Os nomes de módulo acima (`portico_espacial`) são provisórios. Ajuste conforme o nome real do pacote. <!-- CONFIRMAR -->
+Um exemplo mais completo (edifício com 6 pavimentos, pilares com desnível, lajes e exportação por pavimento) está em [`examples/exemplo_portico_espacial.py`](examples/exemplo_portico_espacial.py). As saídas são gravadas em `examples/saida/`.
 
 Se houver qualquer excentricidade real no modelo, configure antes de `montar()`:
 
@@ -217,29 +237,51 @@ Apenas o esqueleto da classe (`NotImplementedError`). Está prevista a exportaç
 
 ```
 .
-├── __init__.py
-├── geometria.py        # Ponto e tolerância geométrica
-├── materiais.py        # Material
-├── concreto.py         # Concreto (NBR 6118)
-├── secoes.py           # SecaoTransversal, SecaoRetangular, SecaoPoligonal
-├── vinculos.py         # Restricao e graus de liberdade
-├── identificadores.py  # GeradorId (id permanente e nome de documentação)
-├── orientacao.py       # Eixos locais e geometria da seção
-├── grelha.py           # Malha ortogonal da laje e coeficientes de carga
-├── elementos.py        # Barra, Lance, Vao, Link, Pilar, Viga, Laje, Apoios
-├── interseccao.py      # Detecção de interseções e apoios
-├── estrutura.py        # ModeloPortico, AnalisePortico, DimensionamentoPortico, Portico
-├── detalhamento.py     # DetalhamentoPortico
-└── exportadores/
-    ├── dxf.py
-    ├── sap2000.py
-    └── ifc/
-        ├── escritor.py
-        ├── ordem_atributos.py
-        └── exportador.py
+├── pyproject.toml              # metadados, dependências e configuração (pytest, ruff)
+├── src/
+│   └── portico_espacial/
+│       ├── __init__.py         # API pública e __version__
+│       ├── geometria.py        # Ponto e tolerância geométrica
+│       ├── materiais.py        # Material
+│       ├── concreto.py         # Concreto (NBR 6118)
+│       ├── secoes.py           # SecaoTransversal, SecaoRetangular, SecaoPoligonal
+│       ├── vinculos.py         # Restricao e graus de liberdade
+│       ├── identificadores.py  # GeradorId (id permanente e nome de documentação)
+│       ├── orientacao.py       # Eixos locais e geometria da seção
+│       ├── grelha.py           # Malha ortogonal da laje e coeficientes de carga
+│       ├── elementos.py        # Barra, Lance, Vao, Link, Pilar, Viga, Laje, Apoios
+│       ├── interseccao.py      # Detecção de interseções e apoios
+│       ├── estrutura.py        # ModeloPortico, AnalisePortico, DimensionamentoPortico, Portico
+│       ├── detalhamento.py     # DetalhamentoPortico
+│       └── exportadores/
+│           ├── dxf.py          # requer o extra [dxf]
+│           ├── sap2000.py
+│           └── ifc/
+│               ├── escritor.py
+│               ├── ordem_atributos.py
+│               └── exportador.py
+├── examples/
+│   └── exemplo_portico_espacial.py
+└── tests/                      # pytest
 ```
 
-<!-- CONFIRMAR: ajustar a árvore conforme a organização real do repositório (inclusive exemplos e logger, se forem incluídos) -->
+---
+
+## Desenvolvimento
+
+```bash
+git clone https://github.com/<usuario>/<repositorio>.git
+cd <repositorio>
+python -m venv .venv
+.venv\Scripts\activate          # Windows  (Linux/macOS: source .venv/bin/activate)
+pip install -e ".[dev]"
+
+pytest                          # testes
+ruff check .                    # lint
+ruff format .                   # formatação (indentação com TAB)
+```
+
+O CI (GitHub Actions) roda lint e testes em Python 3.10 a 3.13, no Ubuntu e no Windows, a cada push na `main` e em pull requests.
 
 ---
 
@@ -260,5 +302,4 @@ Apenas o esqueleto da classe (`NotImplementedError`). Está prevista a exportaç
 
 ## Licença
 
-<!-- CONFIRMAR: definir a licença do projeto -->
-A definir.
+Distribuído sob a licença MIT. Veja [LICENSE](LICENSE).

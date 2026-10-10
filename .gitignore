@@ -1,3 +1,21 @@
-/__pycache__
-/exportadores/__pycache__
-/exportadores/ifc/__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Ambientes virtuais
+.venv/
+venv/
+
+# Ferramentas
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Saídas geradas pelos exemplos
+examples/saida/
+*.dxf
+*.ifc

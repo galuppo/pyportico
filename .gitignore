@@ -19,3 +19,4 @@ htmlcov/
 examples/saida/
 *.dxf
 *.ifc
+/.vscode
